@@ -36,7 +36,7 @@ def fill(sequence_from_file,input_list):
     return filled_list
 
 def generate_arrays(input_list, all_arrays, index=0):
-    if index >= len(input_list):
+    if index >= len(input_list) or len(all_arrays) >= 1000:
         return
     i = find_first_non_null(input_list, index)
     if i == -1:
@@ -52,6 +52,7 @@ def generate_arrays(input_list, all_arrays, index=0):
                 array.append(int(num))
         new_input_list = fill(array, input_list)
         all_arrays.append(new_input_list[:])
+        print(new_input_list)
         generate_arrays(new_input_list, all_arrays, max(i + 1, len(array)))
     
 
