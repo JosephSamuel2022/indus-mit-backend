@@ -3,7 +3,7 @@ from flask_cors import CORS
 
 
 app = Flask(__name__)
-CORS(app)  # Enable Cross-Origin Resource Sharing (CORS)
+CORS(app, resources={r"/fill": {"origins": "https://indus-mit.vercel.app"}}) 
 
 
 def find_first_non_null(input_list,start_index):
