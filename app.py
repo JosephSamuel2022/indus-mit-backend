@@ -5,32 +5,54 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)  # Enable Cross-Origin Resource Sharing (CORS)
 
-def fill_input_list(input_list, output_file):
-    with open(output_file, 'r') as f:
-        lines = f.readlines()
-        index = 0
-        while index < len(input_list):
-            if input_list[index] == 'None':  # Check for the string 'None'
-                # Find the first non-'None' value in the input list
-                non_none_index = index
-                while non_none_index < len(input_list) and input_list[non_none_index] == 'None':
-                    non_none_index += 1
-                if non_none_index == len(input_list):
-                    break  # No more non-'None' values to fill
-                y = input_list[non_none_index]
-                # Find the line in the output file where y occurs at the xth index
-                for line in lines:
-                    line_values = [int(val) if val != 'None' else None for val in line.strip().split(',')]
-                    if len(line_values) > index and line_values[index] == int(y):  # Convert y to int
-                        # Fill the 'None' values before and after the xth index
-                        for i in range(index, non_none_index):
-                            if i < len(line_values) and input_list[i] == 'None':
-                                input_list[i] = line_values[i]
-                        index = non_none_index  # Move to the next non-'None' value
-                        break
+
+def find_first_non_null(input_list,start_index):
+    n=len(input_list)
+    while(start_index<n):
+      if(input_list[start_index]!="None"):
+        return start_index
+      start_index+=1
+    return -1
+
+def find_number_at_index(filename, number, index):
+
+  found_lines = []
+  with open(filename, "r") as file:
+    for line in file:
+      # Split the line based on commas and remove leading/trailing whitespaces
+      line_data = [x.strip() for x in line.split(",")]
+      # Check if the line has enough data for the specified index
+      if len(line_data) > index and line_data[index] != "None" and str(number) == line_data[index]:
+        found_lines.append(line.strip())  # Store the entire line
+
+  return found_lines
+
+def fill(sequence_from_file,input_list):
+    filled_list = input_list.copy()
+    for i in range(len(sequence_from_file)):
+
+      if(input_list[i]=="None" and sequence_from_file!="None"):
+        filled_list[i]=sequence_from_file[i]
+    return filled_list
+
+def generate_arrays(input_list, all_arrays, index=0):
+    if index >= len(input_list):
+        return
+    i = find_first_non_null(input_list, index)
+    if i == -1:
+        return
+    number = input_list[i]
+    arr = find_number_at_index("output5.txt", number, i)
+    for seq in arr:
+        array = []
+        for num in seq.split(','):
+            if num.strip() == 'None':
+                array.append('None')
             else:
-                index += 1 # Move to the next index in the input list
-    
+                array.append(int(num))
+        new_input_list = fill(array, input_list)
+        all_arrays.append(new_input_list[:])
+        generate_arrays(new_input_list, all_arrays, max(i + 1, len(array)))
     
 
 @app.route('/fill', methods=['POST'])
@@ -40,10 +62,12 @@ def fill_null_values():
     input_list=data['values']
     
     print(input_list)
-    output_file = 'output5.txt'  # Adjust this path as needed
-    fill_input_list(input_list, output_file)
-    print(input_list)
-    return jsonify({'result': input_list})
+    
+    all_arrays = []
+    generate_arrays(input_list, all_arrays)
+    unique_arrays = [list(x) for x in set(tuple(x) for x in all_arrays)]
+    print(len(unique_arrays))
+    return jsonify({'result': unique_arrays})
 
 if __name__ == '__main__':
-    app.run(port=8000)  # Run the Flask app in debug mode
+    app.run(port=8000,debug=True)  # Run the Flask app in debug mode
